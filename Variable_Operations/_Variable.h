@@ -10,7 +10,6 @@ class IVariable_Controller
 public:
     virtual bool Check_All_Control() = 0;
     virtual bool Check_Null_Ref() = 0;
-    virtual bool Check_Null_Ref__() = 0;
 private:
 
 };

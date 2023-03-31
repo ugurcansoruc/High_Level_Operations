@@ -23,9 +23,7 @@ int main()
 
 	IThread * thread_1 = _Thread_Manager->GetThread("thread_1");
 	IThread * thread_2 = _Thread_Manager->GetThread("thread_2");
-	
-	thread_1->run();
-	thread_2->run();
+
 	this_thread::sleep_for(chrono::seconds(5));
 
 	return 0;

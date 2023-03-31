@@ -3,23 +3,15 @@
 
 #include <iostream>
 #include <thread>
-#include <_Variable.h>
 #include <map>
 #include <typeinfo>
+#include <chrono>
+#include "_IThread.h"
+#include <_Variable.h>
 
 #define ONESECONDUS 1000000
 
 using namespace std;
-
-class IThread
-{
-public:
-    virtual void Start() = 0;
-    virtual void Stop() = 0;
-    virtual void Kill() = 0;
-    virtual void run() = 0;
-    virtual ~IThread() {}
-};
 
 template<typename Callable, typename... Args>
 class Thread : public IThread
@@ -28,13 +20,19 @@ private:
     class ThreadEntity
     {
     public:
+        string _name;
         Callable _function;
         tuple<Args...> _arguments;
         thread _thread;
-        string _name;
+
         int32_t _frequence;
-        bool _onceRun;
+        bool _isOnceRun;
+        bool _isAutoRestart;
         bool _status;
+
+        uint64_t _taskStartTime;
+        uint64_t _taskEndTime;
+        uint64_t _taskWorkCount;
     };
 
 public:
@@ -44,30 +42,57 @@ public:
         _threadEntity._function = func;
         _threadEntity._arguments = args;
         _threadEntity._frequence = 1;
+        _threadEntity._isOnceRun = false;
+        _threadEntity._isAutoRestart = false;
         _threadEntity._status = false;
+        _threadEntity._taskStartTime = 0;
+        _threadEntity._taskEndTime = 0;
+        _threadEntity._taskWorkCount = 0;
     };
 
 private:
-    void Thread_Function();
     ThreadEntity _threadEntity;
+
+private:
+    void Thread_Function()
+    {
+        while (this->_threadEntity._status)
+        {
+            this->_threadEntity._taskStartTime = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+            std::apply(this->_threadEntity._function, this->_threadEntity._arguments);
+
+            this->_threadEntity._taskEndTime = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            this->_threadEntity._taskWorkCount++;
+
+            this_thread::sleep_for(chrono::microseconds(ONESECONDUS / this->_threadEntity._frequence));
+        }
+    };
 
 public:
     void Start() override
     {
-
+        if (!_threadEntity._status)
+        {
+            _threadEntity._status = true;
+            _threadEntity._thread = thread(&Thread::Thread_Function, this);
+        }
     };
+
     void Stop() override
     {
-
+        _threadEntity._status = false;
+        if (_threadEntity._thread.joinable())
+            _threadEntity._thread.join();
     };
+
     void Kill() override
     {
-
-    };
-
-    void run() override
-    {
-        apply(this->_threadEntity._function, this->_threadEntity._arguments);
+        if (_threadEntity._thread.joinable())
+        {
+            _threadEntity._thread.detach();
+            _threadEntity._thread.~thread();
+        }
     };
 };
 

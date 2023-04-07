@@ -15,14 +15,4 @@ public:
     virtual ~IThread() {}
 };
 
-/*
-class IThreadManager
-{
-public:
-    virtual ~IThreadManager() {}
-    virtual void Create_Thread(const std::string& thread_name, std::function<void()> function) = 0;
-    virtual IThread* GetThread(const std::string& thread_name) = 0;
-};*/
-
-
 #endif //HIGH_LEVEL_OPERATIONS__ITHREAD_H

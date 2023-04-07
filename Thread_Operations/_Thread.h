@@ -13,104 +13,170 @@
 
 using namespace std;
 
+class IThreadEntity
+{
+public:
+    virtual thread& getThread() = 0;
+    virtual void setThread(thread&& thread)= 0;
+    virtual bool getStatus() = 0;
+    virtual void setStatus(bool status)= 0;
+    virtual bool getIsOnceRun() = 0;
+    virtual void setIsOnceRun(bool isOnceRun)= 0;
+    virtual bool getIsAutoRestart() = 0;
+    virtual void setIsAutoRestart(bool isAutoRestart)= 0;
+    virtual uint64_t getTaskStartTime() = 0;
+    virtual void setTaskStartTime(uint64_t taskStartTime)= 0;
+    virtual uint64_t getTaskEndTime() = 0;
+    virtual void setTaskEndTime(uint64_t taskEndTime)= 0;
+    virtual uint64_t getFrequence() = 0;
+    virtual void setFrequence(uint64_t frequence)= 0;
+    virtual uint64_t getTaskWorkCount() = 0;
+    virtual void increaseTaskWorkCount()= 0;
+    virtual uint64_t getTaskRunTimeLimitSecond() = 0;
+    virtual void setTaskRunTimeLimitSecond(uint64_t taskRunTimeLimitSecond)= 0;
+    virtual uint64_t getTaskWorkCountLimit() = 0;
+    virtual void setTaskWorkCountLimit(uint64_t taskWorkCountLimit)= 0;
+    virtual ~IThreadEntity() {}
+};
+
 template<typename Callable, typename... Args>
-class Thread : public IThread
+class ThreadEntity: public IThreadEntity
 {
 private:
-    class ThreadEntity
-    {
-    public:
-        string _name;
-        Callable _function;
-        tuple<Args...> _arguments;
-        thread _thread;
-
-        int32_t _frequence;
-        bool _isOnceRun;
-        bool _isAutoRestart;
-        bool _status;
-
-        uint64_t _taskStartTime;
-        uint64_t _taskEndTime;
-        uint64_t _taskWorkCount;
-    };
-
+    string _name;
+    Callable _function;
+    tuple<Args...> _arguments;
+    thread _thread;
+    bool _isOnceRun;
+    bool _isAutoRestart;
+    bool _status;
+    uint64_t _frequence;
+    uint64_t _taskStartTime;
+    uint64_t _taskEndTime;
+    uint64_t _taskWorkCount;
+    uint64_t _taskRunTimeLimitSecond;
+    uint64_t _taskWorkCountLimit;
 public:
-    Thread(string name, Callable func, tuple<Args...> args)
+    ThreadEntity(string name, Callable function, tuple<Args...> arguments) : _name(name), _function(function), _arguments(arguments)
     {
-        _threadEntity._name = name;
-        _threadEntity._function = func;
-        _threadEntity._arguments = args;
-        _threadEntity._frequence = 1;
-        _threadEntity._isOnceRun = false;
-        _threadEntity._isAutoRestart = false;
-        _threadEntity._status = false;
-        _threadEntity._taskStartTime = 0;
-        _threadEntity._taskEndTime = 0;
-        _threadEntity._taskWorkCount = 0;
+        this->_frequence = 1;
+        this->_isOnceRun = false;
+        this->_isAutoRestart = false;
+        this->_status = false;
+        this->_taskStartTime = 0;
+        this->_taskEndTime = 0;
+        this->_taskWorkCount = 0;
+        this->_taskRunTimeLimitSecond = 10;
+        this->_taskWorkCountLimit = 0;
+    }
+
+    thread& getThread() override{
+        return this->_thread;
     };
+
+    void setThread(thread&& thread) override{
+        this->_thread = move(thread);
+    };
+    bool getStatus() override {
+        return this->_status;
+    };
+    void setStatus(bool status) override{
+        this->_status = status;
+    };
+    bool getIsOnceRun() override {
+        return this->_isOnceRun;
+    };
+    void setIsOnceRun(bool isOnceRun) override{
+        this->_isOnceRun = isOnceRun;
+    };
+
+    bool getIsAutoRestart() override{
+        return this->_isAutoRestart;
+    };
+    void setIsAutoRestart(bool isAutoRestart) override{
+        this->_isAutoRestart = isAutoRestart;
+    };
+    uint64_t getTaskStartTime() override{
+        return this->_taskStartTime;
+    };
+    void setTaskStartTime(uint64_t taskStartTime) override{
+        this->_taskStartTime = taskStartTime;
+    };
+    uint64_t getTaskEndTime() override{
+        return this->_taskEndTime;
+    };
+    void setTaskEndTime(uint64_t taskEndTime) override{
+        this->_taskEndTime = taskEndTime;
+    };
+    uint64_t getFrequence() override{
+        return this->_frequence;
+    };
+    void setFrequence(uint64_t frequence) override{
+        this->_frequence = frequence;
+    };
+    uint64_t getTaskWorkCount() override{
+        return this->_taskWorkCount;
+    };
+    void increaseTaskWorkCount() override{
+        this->_taskWorkCount++;
+    };
+    uint64_t getTaskRunTimeLimitSecond() override{
+        return this->_taskRunTimeLimitSecond;
+    };
+    void setTaskRunTimeLimitSecond(uint64_t taskRunTimeLimitSecond) override{
+        this->_taskRunTimeLimitSecond = taskRunTimeLimitSecond;
+    };
+    uint64_t getTaskWorkCountLimit() override{
+        return this->_taskWorkCountLimit;
+    };
+    void setTaskWorkCountLimit(uint64_t taskWorkCountLimit) override{
+        this->_taskWorkCountLimit = taskWorkCountLimit;
+    };
+
+};
+
+class Thread : public IThread
+{
 
 private:
-    ThreadEntity _threadEntity;
+    IThreadEntity * _IThreadEntity;
 
 private:
-    void Thread_Function()
-    {
-        while (this->_threadEntity._status)
-        {
-            this->_threadEntity._taskStartTime = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-
-            std::apply(this->_threadEntity._function, this->_threadEntity._arguments);
-
-            this->_threadEntity._taskEndTime = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-            this->_threadEntity._taskWorkCount++;
-
-            this_thread::sleep_for(chrono::microseconds(ONESECONDUS / this->_threadEntity._frequence));
-        }
-    };
-
+    void Thread_Function();
 public:
-    void Start() override
-    {
-        if (!_threadEntity._status)
-        {
-            _threadEntity._status = true;
-            _threadEntity._thread = thread(&Thread::Thread_Function, this);
-        }
-    };
+    Thread(IThreadEntity * IThreadEntity): _IThreadEntity(IThreadEntity){}
 
-    void Stop() override
-    {
-        _threadEntity._status = false;
-        if (_threadEntity._thread.joinable())
-            _threadEntity._thread.join();
-    };
+    void Start() override;
 
-    void Kill() override
-    {
-        if (_threadEntity._thread.joinable())
-        {
-            _threadEntity._thread.detach();
-            _threadEntity._thread.~thread();
-        }
-    };
+    void Stop() override;
+
+    void Kill() override;
 };
 
 class Thread_Manager
 {
 private:
-    map<string, unique_ptr<IThread>> _thread_map;
-    Variable_Manager variable_manager;
+    map<string, unique_ptr<Thread>> _threadMap;
+    Variable_Manager variable_manager; //TODO daha sonra implemente edilecektir.
+private:
+    void Perform_Thread_Check();
 public:
+    Thread_Manager()
+    {
+        this->Create_Thread("*Perform_Thread_Check*", &Thread_Manager::Perform_Thread_Check, this)->Start();
+    };
+
     template<typename Callable, typename... Args>
-    void Create_Thread(const std::string& thread_name, Callable function, Args... args)
+    IThread * Create_Thread(const std::string& thread_name, Callable function, Args... args)
     {
         //variable_manager.Check_Variable(new String_Controller(thread_name)); // TODO her defasında bir string controller oluşturulmasına gerek yok!!!
-        //TODO thread olusturma durumu kontrol et!!
-        _thread_map[thread_name] = make_unique<Thread<decltype(function), decltype(args)...>>(thread_name, function, make_tuple(args...));
+        //TODO bu islem thread gelen isimde birs thread olup olmamasına gore gerceklestirilmelidir.
+        this->_threadMap[thread_name] = make_unique<Thread>(Thread(new ThreadEntity<decltype(function), decltype(args)...>(thread_name, function, make_tuple(args...))));
+
+        return GetThread(thread_name);
     }
 
-    IThread* GetThread(const string& thread_name);
+    IThread * GetThread(const string& thread_name);
 };
 
 #endif // !THREAD_OPERATIONS__THREAD_H__

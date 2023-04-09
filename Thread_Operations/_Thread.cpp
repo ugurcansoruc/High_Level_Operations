@@ -6,10 +6,50 @@ Thread_Manager::Perform_Thread_Check()
     for(auto it = _threadMap.begin(); it != _threadMap.end(); it++)
     {
         IThread * _IThread = GetThread(it->first);
-        _IThread->Start();
+
+        this->CheckTimeOut(_IThread);
+        this->CheckOverRun(_IThread);
     }
 }
 
+void Thread_Manager::CheckTimeOut(IThread * _IThread)
+{
+    IThreadEntity *_IThradEntity =  _IThread->getIThreadEntity();
+
+    if(_IThradEntity->getTaskRunTimeLimitSecond() < (_IThradEntity->getTaskEndTime() - _IThradEntity->getTaskStartTime()))
+    {
+        // TODO LOG -> mevcut taskRuntime = asim zamani bildirisi
+        if(_IThradEntity->getIsAutoRestart())
+        {
+            // TODO LOG -> thread sonlandirme bildirisi
+            _IThread->Restart();
+        }
+    }
+    else
+    {
+        // TODO LOG -> mevcut taskRuntime
+    }
+}
+
+
+void Thread_Manager::CheckOverRun(IThread * _IThread)
+{
+    IThreadEntity *_IThradEntity =  _IThread->getIThreadEntity();
+
+    if((0 != _IThradEntity->getTaskWorkCountLimit()) && (_IThradEntity->getTaskWorkCountLimit() < _IThradEntity->getTaskWorkCount()))
+    {
+        // TODO LOG -> mevcut taskWorkCount = asimi bildir
+        if(_IThradEntity->getIsAutoRestart())
+        {
+            // TODO LOG -> thread sonlandirme bildirisi
+            _IThread->Restart();
+        }
+    }
+    else
+    {
+        // TODO LOG -> mevcut taskWorkCount
+    }
+}
 void Thread::Start()
 {
     if (!_IThreadEntity->getStatus())
@@ -57,6 +97,13 @@ void Thread::Stop()
     }
 };
 
+void Thread::Restart()
+{
+    this->Stop();
+    this->Kill(); // TODO bunu yapmak belki thread sınıfı icin problem yaratabilir tekrar olusturmak gerekebilir.
+    this->Start();
+};
+
 void Thread::Kill()
 {
     if (this->_IThreadEntity->getThread().joinable())
@@ -64,6 +111,11 @@ void Thread::Kill()
         this->_IThreadEntity->getThread().detach();
         this->_IThreadEntity->getThread().~thread();
     }
+}
+
+IThreadEntity * Thread::getIThreadEntity()
+{
+    return this->_IThreadEntity;
 }
 
 IThread * Thread_Manager::GetThread(const string& thread_name)

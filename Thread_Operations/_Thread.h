@@ -6,7 +6,6 @@
 #include <map>
 #include <typeinfo>
 #include <chrono>
-#include "_IThread.h"
 #include <_Variable.h>
 
 #define ONESECONDUS 1000000
@@ -139,6 +138,17 @@ public:
     }
 };
 
+class IThread
+{
+public:
+    virtual void Start() = 0;
+    virtual void Stop() = 0;
+    virtual void Restart() = 0;
+    virtual void Kill() = 0;
+    virtual IThreadEntity * getIThreadEntity() = 0;
+    virtual ~IThread() {}
+};
+
 class Thread : public IThread
 {
 
@@ -154,7 +164,11 @@ public:
 
     void Stop() override;
 
+    void Restart() override;
+
     void Kill() override;
+
+    IThreadEntity * getIThreadEntity() override;
 };
 
 class Thread_Manager
@@ -164,6 +178,8 @@ private:
     Variable_Manager variable_manager; //TODO daha sonra implemente edilecektir.
 private:
     void Perform_Thread_Check();
+    void CheckTimeOut(IThread * _IThread);
+    void CheckOverRun(IThread * _IThread);
 public:
     Thread_Manager()
     {

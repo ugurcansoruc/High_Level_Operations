@@ -13,7 +13,7 @@ add_executable (High_Level_Operations
 "Thread_Operations/_Thread.h"
 "Variable_Operations/_Variable.cpp"
 "Variable_Operations/_Variable.h"
-        Thread_Operations/_IThread.h)
+        )
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET High_Level_Operations PROPERTY CXX_STANDARD 20)

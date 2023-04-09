@@ -16,8 +16,7 @@ void test_2(int x)
 
 int main()
 {
-
-	Thread_Manager * _Thread_Manager = new Thread_Manager();
+    Thread_Manager * _Thread_Manager = new Thread_Manager();
 /*
     IThread * thread_1 = _Thread_Manager->Create_Thread("thread_1",test_1, 1);
     IThread * thread_2 = _Thread_Manager->Create_Thread("thread_2", test_2, 2);

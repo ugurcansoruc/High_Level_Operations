@@ -36,6 +36,7 @@ public:
     virtual void setTaskRunTimeLimitSecond(uint64_t taskRunTimeLimitSecond)= 0;
     virtual uint64_t getTaskWorkCountLimit() = 0;
     virtual void setTaskWorkCountLimit(uint64_t taskWorkCountLimit)= 0;
+    virtual void runTask() = 0;
     virtual ~IThreadEntity() {}
 };
 
@@ -133,6 +134,9 @@ public:
         this->_taskWorkCountLimit = taskWorkCountLimit;
     };
 
+    void runTask() override{
+        apply(this->_function, this->_arguments);
+    }
 };
 
 class Thread : public IThread

@@ -22,7 +22,6 @@ void Thread::Start()
 
 void Thread::Thread_Function()
 {
-
     while (this->_IThreadEntity->getStatus())
     {
         if (this->_IThreadEntity->getIsOnceRun())
@@ -31,15 +30,15 @@ void Thread::Thread_Function()
         }
 
         this->_IThreadEntity->setTaskStartTime(chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-/*
+
         try
         {
-            apply(_threadEntity._function, _threadEntity._arguments);
+            this->_IThreadEntity->runTask();
         }
         catch (...)
         {
             //TODO LOG cerr << "Thread[" << _threadEntity._name << "] execution error!" << endl;
-        }*/
+        }
 
         this->_IThreadEntity->setTaskEndTime(chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
         this->_IThreadEntity->increaseTaskWorkCount();

@@ -16,13 +16,14 @@ void Thread_Manager::CheckTimeOut(IThread * _IThread)
 {
     IThreadEntity *_IThradEntity =  _IThread->getIThreadEntity();
 
-    if(_IThradEntity->getTaskRunTimeLimitSecond() < (_IThradEntity->getTaskEndTime() - _IThradEntity->getTaskStartTime()))
+    if(_IThradEntity->getTaskRunTimeLimitSecond() < ((_IThradEntity->getTaskEndTime() - _IThradEntity->getTaskStartTime()) >
+    (_IThradEntity->getTaskRunTimeLimitSecond() * 10) ? 0 : (_IThradEntity->getTaskEndTime() - _IThradEntity->getTaskStartTime())))
     {
         // TODO LOG -> mevcut taskRuntime = asim zamani bildirisi
         if(_IThradEntity->getIsAutoRestart())
         {
             // TODO LOG -> thread sonlandirme bildirisi
-            _IThread->Restart();
+            //_IThread->Restart(); //!< TODO kontrol et. Düzgün şekilde yeniden başlatamıyor. Arkada mevcut açıkken başka bir tane daha açıyor
         }
     }
     else
@@ -42,7 +43,7 @@ void Thread_Manager::CheckOverRun(IThread * _IThread)
         if(_IThradEntity->getIsAutoRestart())
         {
             // TODO LOG -> thread sonlandirme bildirisi
-            _IThread->Restart();
+            //_IThread->Restart(); //!< TODO kontrol et. Düzgün şekilde yeniden başlatamıyor. Arkada mevcut açıkken başka bir tane daha açıyor
         }
     }
     else
@@ -81,7 +82,7 @@ void Thread::Thread_Function()
         }
 
         this->_IThreadEntity->setTaskEndTime(chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-        this->_IThreadEntity->increaseTaskWorkCount();
+        this->_IThreadEntity->increaseTaskWorkCount(1);
 
         this_thread::sleep_for(chrono::microseconds(ONESECONDUS / this->_IThreadEntity->getFrequence()));
     }
@@ -91,16 +92,18 @@ void Thread::Stop()
 {
     this->_IThreadEntity->setStatus(false);
 
+    /*
     if (this->_IThreadEntity->getThread().joinable())
     {
         this->_IThreadEntity->getThread().join();
-    }
+    }*/
 };
 
 void Thread::Restart()
 {
     this->Stop();
     this->Kill(); // TODO bunu yapmak belki thread sınıfı icin problem yaratabilir tekrar olusturmak gerekebilir.
+    this->Reset();
     this->Start();
 };
 
@@ -113,6 +116,13 @@ void Thread::Kill()
     }
 }
 
+void Thread::Reset()
+{
+    this->_IThreadEntity->setTaskStartTime(0);
+    this->_IThreadEntity->setTaskEndTime(0);
+    this->_IThreadEntity->setTaskWorkCount(0);
+}
+
 IThreadEntity * Thread::getIThreadEntity()
 {
     return this->_IThreadEntity;
@@ -122,7 +132,7 @@ IThread * Thread_Manager::GetThread(const string& thread_name)
 {
     if (_threadMap.find(thread_name) != _threadMap.end())
     {
-        //return _threadMap[thread_name].get();
+        return _threadMap[thread_name].get();
     }
     return nullptr;
 }

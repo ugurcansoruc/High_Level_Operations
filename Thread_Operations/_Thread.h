@@ -30,7 +30,8 @@ public:
     virtual uint64_t getFrequence() = 0;
     virtual void setFrequence(uint64_t frequence)= 0;
     virtual uint64_t getTaskWorkCount() = 0;
-    virtual void increaseTaskWorkCount()= 0;
+    virtual void increaseTaskWorkCount(int16_t count)= 0;
+    virtual void setTaskWorkCount(int16_t count) = 0;
     virtual uint64_t getTaskRunTimeLimitSecond() = 0;
     virtual void setTaskRunTimeLimitSecond(uint64_t taskRunTimeLimitSecond)= 0;
     virtual uint64_t getTaskWorkCountLimit() = 0;
@@ -117,8 +118,11 @@ public:
     uint64_t getTaskWorkCount() override{
         return this->_taskWorkCount;
     };
-    void increaseTaskWorkCount() override{
-        this->_taskWorkCount++;
+    void increaseTaskWorkCount(int16_t count) override{
+        this->_taskWorkCount += count;
+    };
+    void setTaskWorkCount(int16_t count) override{
+        this->_taskWorkCount = count;
     };
     uint64_t getTaskRunTimeLimitSecond() override{
         return this->_taskRunTimeLimitSecond;
@@ -145,6 +149,7 @@ public:
     virtual void Stop() = 0;
     virtual void Restart() = 0;
     virtual void Kill() = 0;
+    virtual void Reset() = 0;
     virtual IThreadEntity * getIThreadEntity() = 0;
     virtual ~IThread() {}
 };
@@ -168,6 +173,8 @@ public:
 
     void Kill() override;
 
+    void Reset() override;
+
     IThreadEntity * getIThreadEntity() override;
 };
 
@@ -183,7 +190,12 @@ private:
 public:
     Thread_Manager()
     {
-        this->Create_Thread("*Perform_Thread_Check*", &Thread_Manager::Perform_Thread_Check, this)->Start();
+        this->Create_Thread("_Perform_Thread_Check_", &Thread_Manager::Perform_Thread_Check, this);
+        IThread *_IThread  = this->GetThread("_Perform_Thread_Check_");
+        IThreadEntity *_IThreadEntity  = _IThread->getIThreadEntity();
+        _IThreadEntity->setTaskWorkCountLimit(10);
+        _IThreadEntity->setIsAutoRestart(true);
+        _IThread->Start();
     };
 
     template<typename Callable, typename... Args>
